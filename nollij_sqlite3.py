@@ -63,10 +63,12 @@ def get_forn_keys(cur,table):
 # In[ ]:
 
 
-def get_schema(cur,table):
+def get_schema(cur,table,columns=False):
     # get full table creation schema from a database
     # input table has to be a string and is the table for which outpul is desired
     # input cur is a cursor object connected to a database
+    # input columns is boolean and specifies whether only columns are returned
+    # output is the schema used to build the original table
     table = (table,)
     sql = '''
     SELECT sql 
@@ -78,6 +80,14 @@ def get_schema(cur,table):
     remove_char = [ord(i) for i in ['\n','\t','(',')',',']]
     remove_uni = [34, 39, 168, 180]
     remove = remove_char + remove_uni
-    schema = [i.lstrip(' ') for i in blurb[0][0].translate({i:None for i in remove}).split('\r') if i!='']
+    blurb2 = [i.lstrip(' ') for i in blurb[0][0].translate({i:None for i in remove}).split('\r') if i!='']
+    for i,k in enumerate(blurb2):
+        if k.startswith('ON DELETE'):
+            blurb2[i-1] += k
+            blurb2[i] = blurb2[i-1]
+    schema = []
+    [schema.append(i) for i in blurb2 if i not in schema]
+    if columns:
+        schema = [i for i in schema if (i.startswith('[') or i.startswith('CREATE'))]
     return schema
 
